@@ -52,6 +52,15 @@ CREATE TABLE supplier_assessments (
     assessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE agent_tool_traces (
+    trace_id UUID PRIMARY KEY,
+    supplier_id TEXT NOT NULL REFERENCES suppliers(supplier_id),
+    tool_trace JSONB NOT NULL,
+    evidence_documents JSONB NOT NULL,
+    narrative JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE allocation_scenarios (
     scenario_id UUID PRIMARY KEY,
     scenario_name TEXT NOT NULL,

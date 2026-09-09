@@ -87,6 +87,33 @@ def persist_extracted_facts(engine, commitments: list[SupplierCommitment], raw_d
                 """), {"fact_id": str(uuid4()), "supplier_id": commitment.supplier_id, "document_id": document_id, "fact_name": field_name, "fact_value": json.dumps(getattr(commitment, attribute)), "page_number": evidence.page, "source_passage": evidence.passage})
 
 
+def persist_agent_traces(engine, assessments: dict) -> None:
+    """Persist each local-agent assessment and its bounded evidence-tool trace."""
+    with engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE IF NOT EXISTS agent_tool_traces (
+                trace_id UUID PRIMARY KEY,
+                supplier_id TEXT NOT NULL REFERENCES suppliers(supplier_id),
+                tool_trace JSONB NOT NULL,
+                evidence_documents JSONB NOT NULL,
+                narrative JSONB NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """))
+        for supplier_id, assessment in assessments.items():
+            connection.execute(text("DELETE FROM agent_tool_traces WHERE supplier_id = :supplier_id"), {"supplier_id": supplier_id})
+            connection.execute(text("""
+                INSERT INTO agent_tool_traces (trace_id, supplier_id, tool_trace, evidence_documents, narrative)
+                VALUES (:trace_id, :supplier_id, CAST(:tool_trace AS jsonb), CAST(:evidence_documents AS jsonb), CAST(:narrative AS jsonb))
+            """), {
+                "trace_id": str(uuid4()),
+                "supplier_id": supplier_id,
+                "tool_trace": json.dumps(assessment.tool_trace),
+                "evidence_documents": json.dumps(assessment.evidence_documents),
+                "narrative": assessment.model_dump_json(),
+            })
+
+
 def persist_allocation_scenario(engine, name: str, constraints: dict, allocation: pd.DataFrame) -> str:
     scenario_id = str(uuid4())
     total_cost = float(allocation.estimated_cost_eur.sum())
