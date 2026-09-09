@@ -15,12 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 
 SUPPLIERS = [
-    ("SUP-001", "Alpha Components GmbH", "Germany", 14.20, 600_000, 21, 97.0, 1.0, 96.0, 24.2, 0.61),
-    ("SUP-002", "Beta Precision Ltd", "Poland", 13.80, 400_000, 14, 96.0, 1.2, 91.7, 25.1, 0.95),
-    ("SUP-003", "Gamma Manufacturing SA", "France", 14.05, 520_000, 18, 97.0, 0.9, 97.8, 18.6, 0.52),
-    ("SUP-004", "Delta Industrial SpA", "Italy", 13.30, 440_000, 20, 95.0, 1.1, 95.2, 20.8, 1.08),
-    ("SUP-005", "Epsilon Metals Co", "China", 12.95, 380_000, 28, 94.0, 1.5, 94.1, 29.3, 1.41),
-    ("SUP-006", "Zeta Engineering AB", "Sweden", 15.10, 320_000, 16, 98.0, 0.8, 98.5, 15.9, 0.43),
+    ("SUP-001", "Demo Supplier 001 GmbH", "Germany", 14.20, 600_000, 21, 97.0, 1.0, 96.0, 24.2, 0.61),
+    ("SUP-002", "Demo Supplier 002 Ltd", "Poland", 13.80, 400_000, 14, 96.0, 1.2, 91.7, 25.1, 0.95),
+    ("SUP-003", "Demo Supplier 003 SA", "France", 14.05, 520_000, 18, 97.0, 0.9, 97.8, 18.6, 0.52),
+    ("SUP-004", "Demo Supplier 004 SpA", "Italy", 13.30, 440_000, 20, 95.0, 1.1, 95.2, 20.8, 1.08),
+    ("SUP-005", "Demo Supplier 005 Co", "China", 12.95, 380_000, 28, 94.0, 1.5, 94.1, 29.3, 1.41),
+    ("SUP-006", "Demo Supplier 006 AB", "Sweden", 15.10, 320_000, 16, 98.0, 0.8, 98.5, 15.9, 0.43),
 ]
 
 
@@ -35,7 +35,7 @@ def write_pdf(path: Path, text: str) -> None:
 
 def write_documents() -> None:
     for supplier_id, name, country, price, capacity, lead_time, otd, defects, *_ in SUPPLIERS:
-        contract = f"""XYZ INDUSTRIAL SYSTEMS — SUPPLY AGREEMENT\n\nSupplier: {name} ({supplier_id})\nCountry of manufacture: {country}\n\nCommercial terms\nQuoted unit price: EUR {price:.2f}\nCertified annual capacity: {capacity:,} units\nContractual lead time: {lead_time} calendar days\nMinimum on-time delivery: {otd:.1f}%\nMaximum defect rate: {defects:.1f}%\nMinimum annual volume: 40,000 units\nTermination notice: 90 days\n"""
+        contract = f"""EXAMPLE MANUFACTURING SE — FICTIONAL SUPPLY AGREEMENT\n\nSupplier: {name} ({supplier_id})\nCountry of manufacture: {country}\n\nCommercial terms\nQuoted unit price: EUR {price:.2f}\nCertified annual capacity: {capacity:,} units\nContractual lead time: {lead_time} calendar days\nMinimum on-time delivery: {otd:.1f}%\nMaximum defect rate: {defects:.1f}%\nMinimum annual volume: 40,000 units\nTermination notice: 90 days\n"""
         audit = f"""SUPPLIER AUDIT REPORT — {name}\n\nAudit scope: manufacturing quality system and capacity controls.\nConclusion: production controls are suitable for the declared {capacity:,} unit annual capacity.\nCapacity statement: output above the declared limit requires a documented capacity review.\n"""
         certificate = f"""ISO 9001 CERTIFICATE\n\nOrganisation: {name}\nCertificate status: VALID\nValid until: 2027-06-30\nScope: precision-component manufacture\n"""
         write_pdf(RAW / "contracts" / f"{supplier_id}_contract.pdf", contract)

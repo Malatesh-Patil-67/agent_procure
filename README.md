@@ -1,6 +1,6 @@
 # Supplier Allocation Intelligence
 
-An end-to-end, human-in-the-loop prototype for quarterly procurement allocation at XYZ Industrial Systems.
+An end-to-end, human-in-the-loop prototype for quarterly procurement allocation at Example Manufacturing SE, a fictional company.
 
 The system generates a synthetic supplier archive, extracts contractual commitments with evidence references, compares commitments against observed delivery and quality performance, detects drift, and proposes an allocation scenario. It never creates purchase orders: a procurement reviewer approves or adjusts the recommendation.
 
