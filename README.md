@@ -98,6 +98,14 @@ uv run python scripts/run_prefect_flow.py
 
 The default is `qwen2.5:3b`, a smaller model suitable for local development. Change `OLLAMA_MODEL` in `.env` to use another locally installed Ollama model.
 
+## Evaluation
+
+The synthetic evaluation set contains 35 fictional suppliers with labelled expected verification statuses. Run:
+
+```bash
+uv run python scripts/evaluate_verification.py
+```
+
 ## Safety boundary
 
 All datasets are synthetic. The allocation output is a recommendation for human approval, not an order-placement instruction.
