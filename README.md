@@ -40,6 +40,19 @@ uv run dbt run --project-dir dbt --profiles-dir dbt
 
 The flow uses LangGraph to coordinate extraction, verification, and scoring; stages operational data in DuckDB; persists supplier facts, assessments, allocations, and approvals to PostgreSQL; and indexes PDF passages in Qdrant for evidence retrieval.
 
+## Local LLM agents
+
+The deterministic checks remain the control result. Ollama adds evidence-grounded procurement narratives without sending supplier evidence to a cloud model.
+
+```bash
+ollama pull qwen2.5:3b
+cp .env.example .env
+# Set OLLAMA_ENABLED=true in .env
+uv run python scripts/run_prefect_flow.py
+```
+
+The default is `qwen2.5:3b`, a smaller model suitable for local development. Change `OLLAMA_MODEL` in `.env` to use another locally installed Ollama model.
+
 ## Safety boundary
 
 All datasets are synthetic. The allocation output is a recommendation for human approval, not an order-placement instruction.

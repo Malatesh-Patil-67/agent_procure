@@ -31,4 +31,11 @@ def quarterly_supplier_allocation(raw_directory: str) -> dict:
     persist_extracted_facts(engine, state["commitments"], Path(raw_directory))
     load_operating_data(engine, Path(raw_directory))
     indexed_count = index_evidence(raw_directory)
-    return {"supplier_count": len(scorecard), "indexed_documents": indexed_count, "allocation": allocation.to_dict(orient="records")}
+    return {
+        "supplier_count": len(scorecard),
+        "indexed_documents": indexed_count,
+        "allocation": allocation.to_dict(orient="records"),
+        "llm_assessments": {
+            supplier_id: assessment.model_dump() for supplier_id, assessment in state["llm_assessments"].items()
+        },
+    }
