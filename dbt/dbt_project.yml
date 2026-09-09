@@ -1,0 +1,8 @@
+name: supplier_allocation
+version: "1.0"
+config-version: 2
+profile: supplier_allocation
+model-paths: ["models"]
+models:
+  supplier_allocation:
+    +materialized: view

@@ -1,0 +1,12 @@
+supplier_allocation:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: procurement
+      password: procurement
+      port: 5432
+      dbname: procurement
+      schema: analytics
+      threads: 2
