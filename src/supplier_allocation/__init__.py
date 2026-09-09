@@ -1,0 +1,1 @@
+"""Supplier Allocation Intelligence prototype."""
