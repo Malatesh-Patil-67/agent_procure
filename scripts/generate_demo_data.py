@@ -23,6 +23,29 @@ SUPPLIERS = [
     ("SUP-006", "Demo Supplier 006 AB", "Sweden", 15.10, 320_000, 16, 98.0, 0.8, 98.5, 15.9, 0.43),
 ]
 
+COUNTRIES = ["Germany", "Poland", "France", "Italy", "China", "Sweden"]
+for supplier_number in range(7, 36):
+    country = COUNTRIES[(supplier_number - 1) % len(COUNTRIES)]
+    lead_time = 14 + supplier_number % 15
+    required_otd = 94.0 + supplier_number % 5
+    defect_limit = 0.8 + (supplier_number % 4) * 0.2
+    observed_otd = required_otd - (2.5 if supplier_number % 5 == 0 else -0.4)
+    observed_lead = lead_time + (4.0 if supplier_number % 4 == 0 else -0.5)
+    observed_defect = defect_limit + (0.35 if supplier_number % 6 == 0 else -0.2)
+    SUPPLIERS.append((
+        f"SUP-{supplier_number:03}",
+        f"Demo Supplier {supplier_number:03}",
+        country,
+        round(12.5 + supplier_number * 0.11, 2),
+        280_000 + supplier_number * 11_000,
+        lead_time,
+        required_otd,
+        defect_limit,
+        observed_otd,
+        observed_lead,
+        observed_defect,
+    ))
+
 
 def write_pdf(path: Path, text: str) -> None:
     pdf = canvas.Canvas(str(path), pagesize=A4, invariant=True)
@@ -70,7 +93,19 @@ def write_operating_data() -> None:
         writer.writerow({"quarter": "2026-Q4", "component": "Precision Component A", "demand_units": 400000})
 
 
+def write_evaluation_labels() -> None:
+    evaluation_directory = ROOT / "data" / "evaluation"
+    evaluation_directory.mkdir(parents=True, exist_ok=True)
+    with (evaluation_directory / "expected_assessments.csv").open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["supplier_id", "expected_status", "scenario"])
+        writer.writeheader()
+        for supplier_id, _, _, _, _, lead_time, required_otd, defect_limit, observed_otd, observed_lead, observed_defect in SUPPLIERS:
+            findings = observed_otd < required_otd or observed_lead > lead_time or observed_defect > defect_limit
+            writer.writerow({"supplier_id": supplier_id, "expected_status": "REVIEW" if findings else "APPROVED", "scenario": "contract-versus-observed-performance"})
+
+
 if __name__ == "__main__":
     write_documents()
     write_operating_data()
+    write_evaluation_labels()
     print(f"Synthetic source archive created in {RAW}")
