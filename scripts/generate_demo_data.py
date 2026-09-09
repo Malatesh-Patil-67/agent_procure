@@ -25,7 +25,7 @@ SUPPLIERS = [
 
 
 def write_pdf(path: Path, text: str) -> None:
-    pdf = canvas.Canvas(str(path), pagesize=A4)
+    pdf = canvas.Canvas(str(path), pagesize=A4, invariant=True)
     y_position = 800
     for line in text.splitlines():
         pdf.drawString(50, y_position, line)
