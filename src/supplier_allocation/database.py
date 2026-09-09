@@ -12,7 +12,7 @@ from .models import SupplierCommitment, VerificationResult
 
 
 def get_engine():
-    url = os.getenv("DATABASE_URL", "postgresql+psycopg://procurement:procurement@localhost:5432/procurement")
+    url = os.getenv("DATABASE_URL", "postgresql+psycopg://procurement:procurement@localhost:5433/procurement")
     return create_engine(url)
 
 
@@ -46,6 +46,10 @@ def persist_assessments(engine, commitments: list[SupplierCommitment], results: 
             """), {"supplier_id": supplier_id, "supplier_name": commitment.supplier_name, "country": commitment.country})
             result = result_by_id[supplier_id]
             score = float(scorecard.loc[scorecard.supplier_id == supplier_id, "supplier_score"].iloc[0])
+            connection.execute(
+                text("DELETE FROM supplier_assessments WHERE supplier_id = :supplier_id"),
+                {"supplier_id": supplier_id},
+            )
             connection.execute(text("""
                 INSERT INTO supplier_assessments (assessment_id, supplier_id, status, score, findings)
                 VALUES (:assessment_id, :supplier_id, :status, :score, CAST(:findings AS jsonb))
@@ -71,6 +75,10 @@ def persist_extracted_facts(engine, commitments: list[SupplierCommitment], raw_d
                 ON CONFLICT (file_name, content_hash) DO UPDATE SET supplier_id = EXCLUDED.supplier_id
                 RETURNING document_id
             """), {"document_id": str(uuid4()), "supplier_id": commitment.supplier_id, "file_name": contract_name, "content_hash": content_hash}).scalar_one()
+            connection.execute(
+                text("DELETE FROM extracted_facts WHERE document_id = :document_id"),
+                {"document_id": document_id},
+            )
             for field_name, attribute in fact_fields.items():
                 evidence = next(item for item in commitment.evidence if field_name.replace("_", " ").split()[0].lower() in item.passage.lower() or field_name.split("_")[0] in item.passage.lower())
                 connection.execute(text("""
