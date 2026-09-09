@@ -65,11 +65,21 @@ st.dataframe(
 
 st.subheader("Evidence and human approval")
 results = json.loads((PROCESSED / "verification_results.json").read_text())
+llm_assessments_path = PROCESSED / "llm_assessments.json"
+llm_assessments = json.loads(llm_assessments_path.read_text()) if llm_assessments_path.exists() else {}
 selected_supplier = st.selectbox("Review supplier", scorecard.supplier_name)
 selected_id = scorecard.loc[scorecard.supplier_name == selected_supplier, "supplier_id"].iloc[0]
 result = next(item for item in results if item["supplier_id"] == selected_id)
 st.write("**Findings:**", " ".join(result["findings"]))
 st.dataframe(pd.DataFrame(result["evidence"]), hide_index=True, use_container_width=True)
+if narrative := llm_assessments.get(selected_id):
+    st.subheader("Local Ollama assessment")
+    st.write(narrative["summary"])
+    st.write("**Recommended status:**", narrative["recommended_status"])
+    st.write("**Key risks:**", "; ".join(narrative["key_risks"]) or "None identified")
+    st.write("**Evidence used:**", ", ".join(narrative["evidence_documents"]))
+else:
+    st.info("No local Ollama assessment is available. Enable `OLLAMA_ENABLED=true` and run `uv run python scripts/run_prefect_flow.py`.")
 if st.button("Search Qdrant evidence archive"):
     try:
         evidence = search_evidence(f"{selected_supplier} delivery quality capacity")
