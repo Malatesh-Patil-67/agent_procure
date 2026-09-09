@@ -29,6 +29,50 @@ uv run streamlit run app.py
 4. Create a reviewable supplier scorecard and detect performance drift.
 5. Optimise an allocation under demand, capacity, concentration, and country-exposure constraints.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    documents["Synthetic supplier archive\nContracts · audits · certificates"]
+    operations["Operational data\nDelivery history · defects · demand"]
+
+    subgraph ingest["Ingestion and evidence"]
+        document_reader["unstructured + pdfplumber\nDocument text and page evidence"]
+        duckdb["DuckDB\nOperational staging"]
+        extractor["Pydantic extraction agent\nSupplier commitments"]
+    end
+
+    subgraph workflow["Prefect + LangGraph workflow"]
+        verification["Verification agents\nDelivery · quality · capacity"]
+        drift["Performance-drift assessment"]
+        scorecard["Supplier scorecard\nDeterministic control result"]
+        ollama["Optional local Ollama agent\nEvidence-grounded narrative"]
+    end
+
+    subgraph decision["Human-in-the-loop decision"]
+        optimiser["CVXPY allocation engine\nCost, capacity, concentration, country risk"]
+        streamlit["Streamlit review dashboard"]
+        approval["Procurement committee\nApprove, reject, or adjust"]
+    end
+
+    postgres[("PostgreSQL\nFacts · assessments · allocations · approvals")]
+    qdrant[("Qdrant\nDocument evidence retrieval")]
+    dbt["dbt\nSupplier-delivery analytics view"]
+
+    documents --> document_reader --> extractor
+    operations --> duckdb --> verification
+    extractor --> verification --> drift --> scorecard
+    extractor --> postgres
+    scorecard --> postgres
+    document_reader --> qdrant
+    scorecard --> ollama --> streamlit
+    scorecard --> optimiser --> streamlit --> approval --> postgres
+    postgres --> dbt
+    qdrant --> streamlit
+```
+
+`Prefect` schedules the end-to-end flow, while `LangGraph` defines the extraction, verification, scoring, and optional local-LLM agent sequence. Deterministic verification remains authoritative; the local Ollama agent only adds a grounded explanation for human review.
+
 ## Full local stack
 
 `docker compose up -d` starts PostgreSQL (`localhost:5433`), Qdrant (`localhost:6333`), and Prefect (`localhost:4200`). Then run:
