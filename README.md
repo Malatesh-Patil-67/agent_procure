@@ -111,3 +111,7 @@ uv run python scripts/evaluate_verification.py
 ## Safety boundary
 
 All datasets are synthetic. The allocation output is a recommendation for human approval, not an order-placement instruction.
+
+## Project summary
+
+This portfolio project demonstrates evidence-grounded procurement intelligence: local semantic retrieval, bounded Ollama agent tools, deterministic supplier verification, constrained allocation optimisation, and human approval with an audit trail. It is a synthetic prototype, not a production procurement system.

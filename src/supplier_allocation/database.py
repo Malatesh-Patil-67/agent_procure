@@ -114,6 +114,15 @@ def persist_agent_traces(engine, assessments: dict) -> None:
             })
 
 
+def load_agent_traces(engine, supplier_id: str) -> list[dict]:
+    with engine.connect() as connection:
+        rows = connection.execute(text("""
+            SELECT created_at, tool_trace, evidence_documents, narrative
+            FROM agent_tool_traces WHERE supplier_id = :supplier_id ORDER BY created_at DESC
+        """), {"supplier_id": supplier_id}).mappings()
+        return [dict(row) for row in rows]
+
+
 def persist_allocation_scenario(engine, name: str, constraints: dict, allocation: pd.DataFrame) -> str:
     scenario_id = str(uuid4())
     total_cost = float(allocation.estimated_cost_eur.sum())

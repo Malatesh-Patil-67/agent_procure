@@ -10,7 +10,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from supplier_allocation.allocation import optimise_allocation
-from supplier_allocation.database import get_engine, persist_allocation_scenario, record_approval
+from supplier_allocation.database import get_engine, load_agent_traces, persist_allocation_scenario, record_approval
 from supplier_allocation.models import AllocationConstraint
 from supplier_allocation.retrieval import search_evidence
 
@@ -71,6 +71,13 @@ selected_supplier = st.selectbox("Review supplier", scorecard.supplier_name)
 selected_id = scorecard.loc[scorecard.supplier_name == selected_supplier, "supplier_id"].iloc[0]
 result = next(item for item in results if item["supplier_id"] == selected_id)
 st.write("**Findings:**", " ".join(result["findings"]))
+selected_scorecard = scorecard.loc[scorecard.supplier_id == selected_id].iloc[0]
+st.subheader("Claim versus observed performance")
+st.dataframe(pd.DataFrame([
+    {"metric": "On-time delivery", "observed": f"{selected_scorecard.observed_otd_pct}%", "assessment": result["status"]},
+    {"metric": "Median lead time", "observed": f"{selected_scorecard.observed_lead_time_days} days", "assessment": result["status"]},
+    {"metric": "Defect rate", "observed": f"{selected_scorecard.observed_defect_rate_pct}%", "assessment": result["status"]},
+]), hide_index=True, use_container_width=True)
 st.dataframe(pd.DataFrame(result["evidence"]), hide_index=True, use_container_width=True)
 if narrative := llm_assessments.get(selected_id):
     st.subheader("Local Ollama assessment")
@@ -81,6 +88,12 @@ if narrative := llm_assessments.get(selected_id):
     st.write("**Agent tool trace:**", " → ".join(narrative.get("tool_trace", [])))
 else:
     st.info("No local Ollama assessment is available. Enable `OLLAMA_ENABLED=true` and run `uv run python scripts/run_prefect_flow.py`.")
+st.subheader("Agent audit history")
+try:
+    traces = load_agent_traces(get_engine(), selected_id)
+    st.dataframe(pd.DataFrame(traces), hide_index=True, use_container_width=True) if traces else st.info("No persisted agent trace yet.")
+except Exception as error:
+    st.warning(f"Audit history unavailable: {error}")
 if st.button("Search Qdrant evidence archive"):
     try:
         evidence = search_evidence(f"{selected_supplier} delivery quality capacity")
