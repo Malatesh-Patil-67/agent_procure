@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from .extraction import _read_document
 from .models import SupplierCommitment, VerificationResult
+from .retrieval import search_evidence
 
 load_dotenv()
 
@@ -25,7 +26,7 @@ class AssessmentNarrative(BaseModel):
 
 
 class EvidenceToolPlan(BaseModel):
-    tools: list[Literal["contract_lookup", "delivery_performance_analysis", "quality_performance_analysis"]]
+    tools: list[Literal["contract_lookup", "delivery_performance_analysis", "quality_performance_analysis", "search_evidence"]]
 
 
 def ollama_enabled() -> bool:
@@ -40,6 +41,17 @@ def build_local_model() -> ChatOllama:
     )
 
 
+def guard_assessment(narrative: AssessmentNarrative, verification: VerificationResult) -> AssessmentNarrative:
+    allowed_documents = {item.document for item in verification.evidence}
+    narrative.evidence_documents = [document for document in narrative.evidence_documents if document in allowed_documents]
+    if not narrative.evidence_documents:
+        narrative.evidence_documents = sorted(allowed_documents)
+    severity = {"APPROVED": 0, "REVIEW": 1, "BLOCKED": 2}
+    if severity[narrative.recommended_status] < severity[verification.status]:
+        narrative.recommended_status = verification.status
+    return narrative
+
+
 def assess_supplier_with_llm(
     commitment: SupplierCommitment,
     verification: VerificationResult,
@@ -48,7 +60,7 @@ def assess_supplier_with_llm(
     contract_text = _read_document(contract_directory / f"{commitment.supplier_id}_contract.pdf")
     plan = build_local_model().with_structured_output(EvidenceToolPlan).invoke(
         "Select the minimum evidence tools needed to assess a supplier. "
-        "Use contract_lookup plus delivery_performance_analysis and quality_performance_analysis when delivery and quality are supplied."
+        "Use contract_lookup plus delivery_performance_analysis and quality_performance_analysis when delivery and quality are supplied. Use search_evidence for relevant supporting passages."
     )
     plan = EvidenceToolPlan.model_validate(plan)
     available_tools = {
@@ -60,6 +72,10 @@ def assess_supplier_with_llm(
         "quality_performance_analysis": f"Defect rate: {verification.observed_defect_rate_pct}%.",
     }
     tool_results = {name: available_tools[name] for name in plan.tools}
+    if "search_evidence" in plan.tools:
+        tool_results["search_evidence"] = search_evidence(
+            f"{commitment.supplier_id} delivery quality capacity", limit=3
+        )
     prompt = f"""You are a procurement verification agent. Assess one supplier using only the evidence below.
 Do not invent facts, thresholds, or evidence. The deterministic verification status is the control result;
 recommend a stricter status only when the supplied evidence supports it.
@@ -80,13 +96,7 @@ Observed verification:
 """
     structured_model = build_local_model().with_structured_output(AssessmentNarrative)
     narrative = AssessmentNarrative.model_validate(structured_model.invoke(prompt))
-    allowed_documents = {item.document for item in verification.evidence}
-    narrative.evidence_documents = [document for document in narrative.evidence_documents if document in allowed_documents]
-    if not narrative.evidence_documents:
-        narrative.evidence_documents = sorted(allowed_documents)
-    severity = {"APPROVED": 0, "REVIEW": 1, "BLOCKED": 2}
-    if severity[narrative.recommended_status] < severity[verification.status]:
-        narrative.recommended_status = verification.status
+    narrative = guard_assessment(narrative, verification)
     narrative.tool_trace = plan.tools
     return narrative
 
