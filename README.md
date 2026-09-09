@@ -6,11 +6,19 @@ The system generates a synthetic supplier archive, extracts contractual commitme
 
 ## Quick start
 
+Install uv once if it is not already available:
+
 ```bash
-UV_PROJECT_ENVIRONMENT=.uv uv sync --all-groups
-UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/generate_demo_data.py
-UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/run_pipeline.py
-UV_PROJECT_ENVIRONMENT=.uv uv run streamlit run app.py
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Restart your terminal after installation, then run:
+
+```bash
+uv sync --all-groups
+uv run python scripts/generate_demo_data.py
+uv run python scripts/run_pipeline.py
+uv run streamlit run app.py
 ```
 
 ## Prototype flow
@@ -26,8 +34,8 @@ UV_PROJECT_ENVIRONMENT=.uv uv run streamlit run app.py
 `docker compose up -d` starts PostgreSQL (`localhost:5432`), Qdrant (`localhost:6333`), and Prefect (`localhost:4200`). Then run:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/run_prefect_flow.py
-DBT_PROFILES_DIR=dbt UV_PROJECT_ENVIRONMENT=.uv uv run dbt --project-dir dbt run
+uv run python scripts/run_prefect_flow.py
+DBT_PROFILES_DIR=dbt uv run dbt --project-dir dbt run
 ```
 
 The flow uses LangGraph to coordinate extraction, verification, and scoring; stages operational data in DuckDB; persists supplier facts, assessments, allocations, and approvals to PostgreSQL; and indexes PDF passages in Qdrant for evidence retrieval.
