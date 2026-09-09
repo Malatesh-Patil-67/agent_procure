@@ -90,6 +90,7 @@ The deterministic checks remain the control result. Ollama adds evidence-grounde
 
 ```bash
 ollama pull qwen2.5:3b
+ollama pull nomic-embed-text
 cp .env.example .env
 # Set OLLAMA_ENABLED=true in .env
 uv run python scripts/run_prefect_flow.py

@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-import hashlib
 import os
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import QdrantClient, models
+from ollama import Client
 
 
 COLLECTION = "supplier_evidence"
-VECTOR_SIZE = 64
+EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
 
 
 def _vector(text: str) -> list[float]:
-    digest = hashlib.shake_256(text.encode()).digest(VECTOR_SIZE)
-    return [byte / 255 for byte in digest]
+    response = Client(host=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")).embed(
+        model=EMBEDDING_MODEL, input=text
+    )
+    return response["embeddings"][0]
 
 
 def get_client() -> QdrantClient:
@@ -23,7 +25,6 @@ def get_client() -> QdrantClient:
 
 def index_documents(raw_directory: Path) -> int:
     client = get_client()
-    client.recreate_collection(COLLECTION, vectors_config=models.VectorParams(size=VECTOR_SIZE, distance=models.Distance.COSINE))
     points = []
     for path in raw_directory.rglob("*.pdf"):
         from .extraction import _read_document
@@ -34,6 +35,10 @@ def index_documents(raw_directory: Path) -> int:
             vector=_vector(content),
             payload={"supplier_id": path.name.split("_")[0], "document": path.name, "page": 1, "passage": content},
         ))
+    client.recreate_collection(
+        COLLECTION,
+        vectors_config=models.VectorParams(size=len(points[0].vector), distance=models.Distance.COSINE),
+    )
     client.upsert(collection_name=COLLECTION, points=points)
     return len(points)
 
