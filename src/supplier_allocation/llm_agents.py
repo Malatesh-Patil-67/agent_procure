@@ -24,6 +24,10 @@ class AssessmentNarrative(BaseModel):
     tool_trace: list[str] = Field(default_factory=list, description="Evidence tools used by the assessment agent.")
 
 
+class EvidenceToolPlan(BaseModel):
+    tools: list[Literal["contract_lookup", "delivery_performance_analysis", "quality_performance_analysis"]]
+
+
 def ollama_enabled() -> bool:
     return os.getenv("OLLAMA_ENABLED", "false").lower() in {"1", "true", "yes"}
 
@@ -42,6 +46,20 @@ def assess_supplier_with_llm(
     contract_directory: Path,
 ) -> AssessmentNarrative:
     contract_text = _read_document(contract_directory / f"{commitment.supplier_id}_contract.pdf")
+    plan = build_local_model().with_structured_output(EvidenceToolPlan).invoke(
+        "Select the minimum evidence tools needed to assess a supplier. "
+        "Use contract_lookup plus delivery_performance_analysis and quality_performance_analysis when delivery and quality are supplied."
+    )
+    plan = EvidenceToolPlan.model_validate(plan)
+    available_tools = {
+        "contract_lookup": contract_text,
+        "delivery_performance_analysis": (
+            f"On-time delivery: {verification.observed_on_time_delivery_pct}%; "
+            f"median lead time: {verification.observed_median_lead_time_days} days."
+        ),
+        "quality_performance_analysis": f"Defect rate: {verification.observed_defect_rate_pct}%.",
+    }
+    tool_results = {name: available_tools[name] for name in plan.tools}
     prompt = f"""You are a procurement verification agent. Assess one supplier using only the evidence below.
 Do not invent facts, thresholds, or evidence. The deterministic verification status is the control result;
 recommend a stricter status only when the supplied evidence supports it.
@@ -50,7 +68,7 @@ Supplier: {commitment.supplier_name} ({commitment.supplier_id})
 Country: {commitment.country}
 
 Contract evidence:
-{contract_text}
+{tool_results.get("contract_lookup", "Not requested")}
 
 Observed verification:
 - Status: {verification.status}
@@ -69,7 +87,7 @@ Observed verification:
     severity = {"APPROVED": 0, "REVIEW": 1, "BLOCKED": 2}
     if severity[narrative.recommended_status] < severity[verification.status]:
         narrative.recommended_status = verification.status
-    narrative.tool_trace = ["contract_lookup", "delivery_performance_analysis", "quality_performance_analysis"]
+    narrative.tool_trace = plan.tools
     return narrative
 
 
