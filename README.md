@@ -31,7 +31,7 @@ uv run streamlit run app.py
 
 ## Full local stack
 
-`docker compose up -d` starts PostgreSQL (`localhost:5432`), Qdrant (`localhost:6333`), and Prefect (`localhost:4200`). Then run:
+`docker compose up -d` starts PostgreSQL (`localhost:5433`), Qdrant (`localhost:6333`), and Prefect (`localhost:4200`). Then run:
 
 ```bash
 uv run python scripts/run_prefect_flow.py

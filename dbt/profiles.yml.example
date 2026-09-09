@@ -6,7 +6,7 @@ supplier_allocation:
       host: localhost
       user: procurement
       password: procurement
-      port: 5432
+      port: 5433
       dbname: procurement
       schema: analytics
       threads: 2

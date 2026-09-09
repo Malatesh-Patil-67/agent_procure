@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: procurement
       POSTGRES_PASSWORD: procurement
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -17,7 +17,7 @@ services:
       retries: 10
 
   qdrant:
-    image: qdrant/qdrant:v1.13.4
+    image: qdrant/qdrant:v1.19.0
     ports:
       - "6333:6333"
       - "6334:6334"
