@@ -20,7 +20,7 @@ PROCESSED = ROOT / "data" / "processed"
 
 st.set_page_config(page_title="Supplier Allocation Intelligence", layout="wide")
 st.title("Supplier Allocation Intelligence")
-st.caption("Synthetic Phase 1 prototype · human approval required before any purchasing decision")
+st.caption("Synthetic procurement intelligence prototype · human approval required before any purchasing decision")
 
 if not (PROCESSED / "supplier_scorecard.csv").exists():
     st.error("Run `python scripts/generate_demo_data.py` and `python scripts/run_pipeline.py` first.")
@@ -78,6 +78,7 @@ if narrative := llm_assessments.get(selected_id):
     st.write("**Recommended status:**", narrative["recommended_status"])
     st.write("**Key risks:**", "; ".join(narrative["key_risks"]) or "None identified")
     st.write("**Evidence used:**", ", ".join(narrative["evidence_documents"]))
+    st.write("**Agent tool trace:**", " → ".join(narrative.get("tool_trace", [])))
 else:
     st.info("No local Ollama assessment is available. Enable `OLLAMA_ENABLED=true` and run `uv run python scripts/run_prefect_flow.py`.")
 if st.button("Search Qdrant evidence archive"):
