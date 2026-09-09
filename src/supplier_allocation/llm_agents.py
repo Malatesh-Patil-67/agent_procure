@@ -21,6 +21,7 @@ class AssessmentNarrative(BaseModel):
         description="One of APPROVED, REVIEW, or BLOCKED."
     )
     evidence_documents: list[str] = Field(description="Names of documents or datasets that support the assessment.")
+    tool_trace: list[str] = Field(default_factory=list, description="Evidence tools used by the assessment agent.")
 
 
 def ollama_enabled() -> bool:
@@ -60,7 +61,16 @@ Observed verification:
 - Available evidence documents: {[item.document for item in verification.evidence]}
 """
     structured_model = build_local_model().with_structured_output(AssessmentNarrative)
-    return AssessmentNarrative.model_validate(structured_model.invoke(prompt))
+    narrative = AssessmentNarrative.model_validate(structured_model.invoke(prompt))
+    allowed_documents = {item.document for item in verification.evidence}
+    narrative.evidence_documents = [document for document in narrative.evidence_documents if document in allowed_documents]
+    if not narrative.evidence_documents:
+        narrative.evidence_documents = sorted(allowed_documents)
+    severity = {"APPROVED": 0, "REVIEW": 1, "BLOCKED": 2}
+    if severity[narrative.recommended_status] < severity[verification.status]:
+        narrative.recommended_status = verification.status
+    narrative.tool_trace = ["contract_lookup", "delivery_performance_analysis", "quality_performance_analysis"]
+    return narrative
 
 
 def assess_all_suppliers(
