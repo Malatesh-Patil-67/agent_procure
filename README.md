@@ -35,7 +35,7 @@ uv run streamlit run app.py
 
 ```bash
 uv run python scripts/run_prefect_flow.py
-DBT_PROFILES_DIR=dbt uv run dbt --project-dir dbt run
+uv run dbt run --project-dir dbt --profiles-dir dbt
 ```
 
 The flow uses LangGraph to coordinate extraction, verification, and scoring; stages operational data in DuckDB; persists supplier facts, assessments, allocations, and approvals to PostgreSQL; and indexes PDF passages in Qdrant for evidence retrieval.
