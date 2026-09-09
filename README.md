@@ -7,11 +7,10 @@ The system generates a synthetic supplier archive, extracts contractual commitme
 ## Quick start
 
 ```bash
-python -m venv .venv
-.venv/bin/pip install -r requirements.txt 'dbt-postgres>=1.8'
-.venv/bin/python scripts/generate_demo_data.py
-.venv/bin/python scripts/run_pipeline.py
-.venv/bin/streamlit run app.py
+UV_PROJECT_ENVIRONMENT=.uv uv sync --all-groups
+UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/generate_demo_data.py
+UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/run_pipeline.py
+UV_PROJECT_ENVIRONMENT=.uv uv run streamlit run app.py
 ```
 
 ## Prototype flow
@@ -27,8 +26,8 @@ python -m venv .venv
 `docker compose up -d` starts PostgreSQL (`localhost:5432`), Qdrant (`localhost:6333`), and Prefect (`localhost:4200`). Then run:
 
 ```bash
-.venv/bin/python scripts/run_prefect_flow.py
-DBT_PROFILES_DIR=dbt .venv/bin/dbt --project-dir dbt run
+UV_PROJECT_ENVIRONMENT=.uv uv run python scripts/run_prefect_flow.py
+DBT_PROFILES_DIR=dbt UV_PROJECT_ENVIRONMENT=.uv uv run dbt --project-dir dbt run
 ```
 
 The flow uses LangGraph to coordinate extraction, verification, and scoring; stages operational data in DuckDB; persists supplier facts, assessments, allocations, and approvals to PostgreSQL; and indexes PDF passages in Qdrant for evidence retrieval.

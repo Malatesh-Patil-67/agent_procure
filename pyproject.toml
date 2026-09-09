@@ -1,3 +1,32 @@
+[project]
+name = "supplier-allocation-intelligence"
+version = "0.1.0"
+description = "Human-in-the-loop supplier verification and allocation prototype."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "cvxpy>=1.5",
+  "dbt-postgres>=1.8",
+  "duckdb>=1.1",
+  "langchain-core>=0.3",
+  "langgraph>=0.2",
+  "pandas>=2.2",
+  "pdfplumber>=0.11",
+  "prefect>=3.0",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.0",
+  "qdrant-client>=1.13",
+  "reportlab>=4.0",
+  "sqlalchemy>=2.0",
+  "streamlit>=1.40",
+  "unstructured[pdf]>=0.16",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
