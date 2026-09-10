@@ -115,7 +115,17 @@ def persist_agent_traces(engine, assessments: dict) -> None:
 
 
 def load_agent_traces(engine, supplier_id: str) -> list[dict]:
-    with engine.connect() as connection:
+    with engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE IF NOT EXISTS agent_tool_traces (
+                trace_id UUID PRIMARY KEY,
+                supplier_id TEXT NOT NULL REFERENCES suppliers(supplier_id),
+                tool_trace JSONB NOT NULL,
+                evidence_documents JSONB NOT NULL,
+                narrative JSONB NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """))
         rows = connection.execute(text("""
             SELECT created_at, tool_trace, evidence_documents, narrative
             FROM agent_tool_traces WHERE supplier_id = :supplier_id ORDER BY created_at DESC

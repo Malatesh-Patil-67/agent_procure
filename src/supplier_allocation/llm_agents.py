@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Literal
 
@@ -71,7 +72,7 @@ def assess_supplier_with_llm(
         ),
         "quality_performance_analysis": f"Defect rate: {verification.observed_defect_rate_pct}%.",
     }
-    tool_results = {name: available_tools[name] for name in plan.tools}
+    tool_results = {name: available_tools[name] for name in plan.tools if name in available_tools}
     if "search_evidence" in plan.tools:
         tool_results["search_evidence"] = search_evidence(
             f"{commitment.supplier_id} delivery quality capacity", limit=3
@@ -107,7 +108,12 @@ def assess_all_suppliers(
     contract_directory: Path,
 ) -> dict[str, AssessmentNarrative]:
     verification_by_id = {item.supplier_id: item for item in verifications}
-    return {
-        commitment.supplier_id: assess_supplier_with_llm(commitment, verification_by_id[commitment.supplier_id], contract_directory)
-        for commitment in commitments
-    }
+    max_workers = int(os.getenv("OLLAMA_MAX_CONCURRENCY", "3"))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            commitment.supplier_id: executor.submit(
+                assess_supplier_with_llm, commitment, verification_by_id[commitment.supplier_id], contract_directory
+            )
+            for commitment in commitments
+        }
+        return {supplier_id: future.result() for supplier_id, future in futures.items()}

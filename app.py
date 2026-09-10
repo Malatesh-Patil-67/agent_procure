@@ -91,7 +91,13 @@ else:
 st.subheader("Agent audit history")
 try:
     traces = load_agent_traces(get_engine(), selected_id)
-    st.dataframe(pd.DataFrame(traces), hide_index=True, use_container_width=True) if traces else st.info("No persisted agent trace yet.")
+    if traces:
+        st.dataframe(pd.DataFrame(traces), hide_index=True, use_container_width=True)
+    elif narrative:
+        st.info("Trace is available from the latest local assessment; run the Prefect workflow to persist it.")
+        st.json({"tool_trace": narrative.get("tool_trace", []), "evidence_documents": narrative["evidence_documents"]})
+    else:
+        st.info("No agent trace yet. Run the Ollama-enabled Prefect workflow to create one.")
 except Exception as error:
     st.warning(f"Audit history unavailable: {error}")
 if st.button("Search Qdrant evidence archive"):

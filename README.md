@@ -97,6 +97,7 @@ uv run python scripts/run_prefect_flow.py
 ```
 
 The default is `qwen2.5:3b`, a smaller model suitable for local development. Change `OLLAMA_MODEL` in `.env` to use another locally installed Ollama model.
+Set `OLLAMA_MAX_CONCURRENCY` to control the bounded number of simultaneous supplier assessments.
 
 The assessment agent uses contract lookup, delivery-performance analysis, and quality-performance analysis. Its cited documents are restricted to supplied evidence and its recommendation cannot weaken the deterministic verification status.
 
@@ -106,6 +107,7 @@ The synthetic evaluation set contains 35 fictional suppliers with labelled expec
 
 ```bash
 uv run python scripts/evaluate_verification.py
+uv run python scripts/evaluate_retrieval.py
 ```
 
 ## Safety boundary

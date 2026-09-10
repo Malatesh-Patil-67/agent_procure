@@ -45,5 +45,8 @@ def index_documents(raw_directory: Path) -> int:
 
 def search_evidence(query: str, limit: int = 5) -> list[dict]:
     client = get_client()
-    results = client.query_points(collection_name=COLLECTION, query=_vector(query), limit=limit).points
+    try:
+        results = client.query_points(collection_name=COLLECTION, query=_vector(query), limit=limit).points
+    except Exception:
+        return []
     return [point.payload | {"similarity": point.score} for point in results]
